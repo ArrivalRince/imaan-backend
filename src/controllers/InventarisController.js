@@ -2,6 +2,15 @@ import Inventaris from "../models/InventarisModel.js";
 import path from "path";
 import fs from "fs";
 
+// Pastikan folder uploads ada
+const uploadDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+// =====================================================
+// GET ALL
+// =====================================================
 export const getInventaris = async (req, res) => {
   try {
     const data = await Inventaris.findAll();
@@ -11,6 +20,9 @@ export const getInventaris = async (req, res) => {
   }
 };
 
+// =====================================================
+// GET BY ID
+// =====================================================
 export const getInventarisById = async (req, res) => {
   try {
     const data = await Inventaris.findByPk(req.params.id);
@@ -22,18 +34,19 @@ export const getInventarisById = async (req, res) => {
   }
 };
 
+// =====================================================
+// CREATE
+// =====================================================
 export const createInventaris = async (req, res) => {
   try {
     let fileName = null;
 
-    // Jika ada upload foto
-    if (req.files?.foto_barang) {
-      const file = req.files.foto_barang;
-      fileName = Date.now() + path.extname(file.name);
+    if (req.file) {
+      // Buat nama unik
+      fileName = Date.now() + path.extname(req.file.originalname);
 
-      file.mv(`uploads/${fileName}`, (err) => {
-        if (err) console.log(err);
-      });
+      // Pindahkan file ke folder uploads
+      fs.renameSync(req.file.path, path.join(uploadDir, fileName));
     }
 
     const { id_user, nama_barang, kondisi, tanggal, jumlah } = req.body;
@@ -42,7 +55,7 @@ export const createInventaris = async (req, res) => {
       id_user,
       nama_barang,
       kondisi,
-      foto_barang: fileName,
+      foto_barang: fileName ? `/uploads/${fileName}` : null,
       tanggal,
       jumlah
     });
@@ -53,6 +66,9 @@ export const createInventaris = async (req, res) => {
   }
 };
 
+// =====================================================
+// UPDATE
+// =====================================================
 export const updateInventaris = async (req, res) => {
   try {
     const id = req.params.id;
@@ -62,19 +78,19 @@ export const updateInventaris = async (req, res) => {
 
     let fileName = data.foto_barang;
 
-    // Jika ada gambar baru
-    if (req.files?.foto_barang) {
-      const file = req.files.foto_barang;
-      fileName = Date.now() + path.extname(file.name);
+    if (req.file) {
+      const newFileName = Date.now() + path.extname(req.file.originalname);
 
-      // Hapus foto lama
-      if (data.foto_barang && fs.existsSync(`uploads/${data.foto_barang}`)) {
-        fs.unlinkSync(`uploads/${data.foto_barang}`);
+      // Hapus foto lama jika ada
+      if (data.foto_barang) {
+        const oldPath = path.join(process.cwd(), data.foto_barang);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
       }
 
-      file.mv(`uploads/${fileName}`, (err) => {
-        if (err) console.log(err);
-      });
+      // Pindahkan file baru
+      fs.renameSync(req.file.path, path.join(uploadDir, newFileName));
+
+      fileName = `/uploads/${newFileName}`;
     }
 
     const { id_user, nama_barang, kondisi, tanggal, jumlah } = req.body;
@@ -94,20 +110,23 @@ export const updateInventaris = async (req, res) => {
   }
 };
 
+// =====================================================
+// DELETE
+// =====================================================
 export const deleteInventaris = async (req, res) => {
   try {
     const data = await Inventaris.findByPk(req.params.id);
 
     if (!data) return res.status(404).json({ message: "Data tidak ditemukan" });
 
-    // Hapus foto jika ada
-    if (data.foto_barang && fs.existsSync(`uploads/${data.foto_barang}`)) {
-      fs.unlinkSync(`uploads/${data.foto_barang}`);
+    // Hapus foto lama jika ada
+    if (data.foto_barang) {
+      const fotoPath = path.join(process.cwd(), data.foto_barang);
+      if (fs.existsSync(fotoPath)) fs.unlinkSync(fotoPath);
     }
 
     await data.destroy();
     res.json({ message: "Data berhasil dihapus" });
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -51,8 +51,9 @@ const startServer = async () => {
         // Gunakan PORT yang sudah dideklarasikan di atas
         app.listen(PORT, "0.0.0.0", () => {
             console.log(`🚀 Server berjalan di http://0.0.0.0:${PORT}`);
-            console.log(`📱 Akses dari Android: http://192.168.1.39:${PORT}`);
+            console.log(`📱 Akses dari Android:http://10.0.2.2:${PORT}`);
             console.log(`💻 Akses dari lokal: http://localhost:${PORT}`);
+
         });
 
     } catch (error) {
