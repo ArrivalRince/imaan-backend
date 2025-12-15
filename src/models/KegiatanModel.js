@@ -21,10 +21,6 @@ const Kegiatan = sequelize.define(
       type: DataTypes.DATEONLY,
       allowNull: false,
     },
-    waktu_kegiatan: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-    },
     lokasi: {
       type: DataTypes.STRING(100),
       allowNull: false,
