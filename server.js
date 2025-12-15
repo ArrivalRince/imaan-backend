@@ -1,11 +1,13 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import db from "./src/config/db.js"; 
+import db from "./src/config/db.js";
 
 import authRoutes from "./src/routes/authRoutes.js";
 import keuanganRoutes from "./src/routes/KeuanganRoutes.js";
 import inventarisRoutes from "./src/routes/InventarisRoutes.js";
+import kegiatanRoutes from "./src/routes/KegiatanRoutes.js"; 
+
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -13,33 +15,34 @@ import { fileURLToPath } from "url";
 import "./src/models/UserModel.js";
 import "./src/models/KeuanganModel.js";
 import "./src/models/InventarisModel.js";
+import "./src/models/KegiatanModel.js"; 
 
 dotenv.config();
 const app = express();
 
-// MIDDLEWARE
+// ================= MIDDLEWARE =================
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// STATIC FILE FOR UPLOADS
+// ================= STATIC FILE UPLOADS =================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ROUTES
+// ================= ROUTES =================
 app.use("/api/auth", authRoutes);
 app.use("/api/keuangan", keuanganRoutes);
 app.use("/api/inventaris", inventarisRoutes);
+app.use("/api/kegiatan", kegiatanRoutes); 
 
 app.get("/", (req, res) => {
     res.send("Server IMAAN berjalan dengan baik 🚀");
 });
 
-// DEKLARASI PORT HANYA SEKALI
-const PORT = process.env.PORT || 5000; 
+// ================= SERVER =================
+const PORT = process.env.PORT || 5000;
 
-// Fungsi untuk memulai server setelah koneksi DB diverifikasi
 const startServer = async () => {
     try {
         await db.authenticate();
@@ -48,17 +51,15 @@ const startServer = async () => {
         await db.sync();
         console.log("✅ Semua model berhasil disinkronkan dengan database.");
 
-        // Gunakan PORT yang sudah dideklarasikan di atas
         app.listen(PORT, "0.0.0.0", () => {
             console.log(`🚀 Server berjalan di http://0.0.0.0:${PORT}`);
-            console.log(`📱 Akses dari Android:http://10.0.2.2:${PORT}`);
+            console.log(`📱 Akses dari Android: http://10.0.2.2:${PORT}`);
             console.log(`💻 Akses dari lokal: http://localhost:${PORT}`);
-
         });
 
     } catch (error) {
         console.error("❌ Gagal memulai server:", error);
-        process.exit(1); 
+        process.exit(1);
     }
 };
 
