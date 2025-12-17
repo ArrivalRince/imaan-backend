@@ -25,7 +25,7 @@ const Kegiatan = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    penceramah: {
+    penanggungjawab: {
       type: DataTypes.STRING(100),
       allowNull: false,
     },

@@ -10,20 +10,6 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // =====================================================
-// GET ALL
-// =====================================================
-export const getKegiatan = async (req, res) => {
-  try {
-    const data = await Kegiatan.findAll({
-      order: [["tanggal_kegiatan", "ASC"]],
-    });
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// =====================================================
 // GET BY ID
 // =====================================================
 export const getKegiatanById = async (req, res) => {
@@ -39,122 +25,106 @@ export const getKegiatanById = async (req, res) => {
   }
 };
 
-// =====================================================
-// CREATE
-// =====================================================
+// ====== CREATE ======
 export const createKegiatan = async (req, res) => {
-  try {
-    let fileName = null;
+    try {
+        // 1. Ambil 'penanggungjawab' dari request body, bukan 'penceramah'
+        const { id_user, nama_kegiatan, tanggal_kegiatan, lokasi, penanggungjawab, deskripsi, status_kegiatan } = req.body;
 
-    if (req.file) {
-      // Buat nama unik
-      fileName = Date.now() + path.extname(req.file.originalname);
+        // Validasi, pastikan 'penanggungjawab' tidak kosong
+        if (!id_user || !nama_kegiatan || !tanggal_kegiatan || !penanggungjawab) {
+            return res.status(400).json({ msg: "Nama, tanggal, dan penanggungjawab wajib diisi." });
+        }
 
-      // Pindahkan file ke folder uploads
-      fs.renameSync(req.file.path, path.join(uploadDir, fileName));
-      fileName = `/uploads/${fileName}`;
+        const url_foto = req.file ? `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}` : null;
+
+        // 2. Saat menyimpan ke database, gunakan variabel 'penanggungjawab'
+        const data = await Kegiatan.create({
+            id_user: parseInt(id_user),
+            nama_kegiatan,
+            tanggal_kegiatan,
+            lokasi,
+            penanggungjawab: penanggungjawab, // <-- SEKARANG SUDAH BENAR
+            deskripsi,
+            status_kegiatan,
+            foto_kegiatan: url_foto
+        });
+
+        res.status(201).json({ message: "Kegiatan berhasil ditambahkan", data });
+
+    } catch (error) {
+        // Cek jika error adalah validasi database (notNull)
+        if (error.name === 'SequelizeValidationError') {
+            const messages = error.errors.map(err => `${err.path} tidak boleh kosong.`);
+            // Pesan error ini sekarang akan lebih jelas jika ada kolom lain yang salah
+            return res.status(400).json({ msg: messages.join(', '), details: error.errors });
+        }
+        console.error("ERROR di createKegiatan:", error.message);
+        res.status(500).json({ msg: "Terjadi kesalahan pada server", error: error.message });
     }
-
-    const {
-      id_user,
-      nama_kegiatan,
-      tanggal_kegiatan,
-      lokasi,
-      penceramah,
-      deskripsi,
-      status_kegiatan,
-    } = req.body;
-
-    const newData = await Kegiatan.create({
-      id_user,
-      nama_kegiatan,
-      tanggal_kegiatan,
-      lokasi,
-      penceramah,
-      deskripsi: deskripsi || null,
-      status_kegiatan: status_kegiatan || "Akan Datang",
-      foto_kegiatan: fileName,
-    });
-
-    res.status(201).json(newData);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
 };
 
-// =====================================================
-// UPDATE
-// =====================================================
+// ====== READ ALL (sudah benar, tidak perlu diubah) ======
+export const getKegiatan = async (req, res) => {
+    try {
+        const response = await Kegiatan.findAll({
+            order: [['id_kegiatan', 'DESC']]
+        });
+        res.status(200).json(response);
+    } catch (error) {
+        console.error("ERROR di getKegiatan:", error.message);
+        res.status(500).json({ msg: "Terjadi kesalahan pada server", error: error.message });
+    }
+};
+
+
+// ====== UPDATE ======
 export const updateKegiatan = async (req, res) => {
-  try {
-    const id = req.params.id;
-    const data = await Kegiatan.findOne({ where: { id_kegiatan: id } });
+    try {
+        const { id } = req.params;
+        // 1. Ambil 'penanggungjawab' dari request body
+        const { nama_kegiatan, tanggal_kegiatan, lokasi, penanggungjawab, deskripsi, status_kegiatan } = req.body;
 
-    if (!data) return res.status(404).json({ message: "Data tidak ditemukan" });
+        const kegiatan = await Kegiatan.findByPk(id);
+        if (!kegiatan) return res.status(404).json({ msg: "Data kegiatan tidak ditemukan." });
 
-    let filePath = data.foto_kegiatan; // may be null or '/uploads/xx.jpg'
+        let updateData = {
+            nama_kegiatan,
+            tanggal_kegiatan,
+            lokasi,
+            penanggungjawab: penanggungjawab, // <-- PERBAIKI JUGA DI UPDATE
+            deskripsi,
+            status_kegiatan,
+        };
+        
+        if (req.file) {
+            updateData.foto_kegiatan = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+        }
 
-    if (req.file) {
-      const newFileName = Date.now() + path.extname(req.file.originalname);
+        await Kegiatan.update(updateData, { where: { id_kegiatan: id } });
+        res.status(200).json({ message: "Kegiatan berhasil diperbarui" });
 
-      // Hapus foto lama jika ada
-      if (data.foto_kegiatan) {
-        const oldPath = path.join(process.cwd(), data.foto_kegiatan);
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-      }
-
-      // Pindahkan file baru
-      fs.renameSync(req.file.path, path.join(uploadDir, newFileName));
-      filePath = `/uploads/${newFileName}`;
+    } catch (error) {
+        console.error("ERROR di updateKegiatan:", error.message);
+        res.status(500).json({ msg: "Gagal memperbarui data", error: error.message });
     }
-
-    const {
-      id_user,
-      nama_kegiatan,
-      tanggal_kegiatan,
-      lokasi,
-      penceramah,
-      deskripsi,
-      status_kegiatan,
-    } = req.body;
-
-    await data.update({
-      id_user,
-      nama_kegiatan,
-      tanggal_kegiatan,
-      lokasi,
-      penceramah,
-      deskripsi: deskripsi || null,
-      status_kegiatan: status_kegiatan || data.status_kegiatan,
-      foto_kegiatan: filePath,
-    });
-
-    res.json({ message: "Data berhasil diperbarui" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
 };
 
-// =====================================================
-// DELETE
-// =====================================================
+// ====== DELETE  ======
 export const deleteKegiatan = async (req, res) => {
-  try {
-    const data = await Kegiatan.findOne({ where: { id_kegiatan: req.params.id } });
+    try {
+        const { id } = req.params;
+        const kegiatan = await Kegiatan.findByPk(id);
+        if (!kegiatan) return res.status(404).json({ msg: "Data kegiatan tidak ditemukan" });
 
-    if (!data) return res.status(404).json({ message: "Data tidak ditemukan" });
-
-    // Hapus foto jika ada
-    if (data.foto_kegiatan) {
-      const fotoPath = path.join(process.cwd(), data.foto_kegiatan);
-      if (fs.existsSync(fotoPath)) fs.unlinkSync(fotoPath);
+        await Kegiatan.destroy({
+            where: { id_kegiatan: id }
+        });
+        res.status(200).json({ message: "Kegiatan berhasil dihapus" });
+    } catch (error) {
+        console.error("ERROR di deleteKegiatan:", error.message);
+        res.status(500).json({ msg: "Terjadi kesalahan pada server", error: error.message });
     }
-
-    await data.destroy();
-    res.json({ message: "Data berhasil dihapus" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
 };
 
 // =====================================================
