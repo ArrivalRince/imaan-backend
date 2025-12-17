@@ -1,7 +1,10 @@
+// File: controllers/KeuanganController.js
+
 import Keuangan from "../models/KeuanganModel.js";
 
 // ====== CREATE ======
 export const createKeuangan = async (req, res) => {
+    // ... (Fungsi ini sudah benar, tidak perlu diubah)
     try {
         const { id_user, keterangan, tipe_transaksi, tanggal, jumlah } = req.body;
 
@@ -30,21 +33,39 @@ export const createKeuangan = async (req, res) => {
     }
 };
 
-// ====== READ ALL ======
+// =======================================================================
+// ===              PERBAIKAN UTAMA BACKEND ADA DI SINI                ===
+// =======================================================================
+// ====== READ ALL (dengan filter id_user) ======
 export const getKeuangan = async (req, res) => {
     try {
+        // 1. Ambil id_user dari query parameter URL (contoh: /api/keuangan?id_user=1)
+        const { id_user } = req.query;
+
+        // 2. Validasi: Jika tidak ada id_user, jangan kirim data apapun.
+        if (!id_user) {
+            return res.status(400).json({ msg: "Parameter id_user wajib disertakan." });
+        }
+
+        // 3. Gunakan id_user di dalam query database untuk memfilter data.
         const data = await Keuangan.findAll({
+            where: {
+                id_user: id_user // Hanya ambil data yang id_user-nya cocok
+            },
             order: [["tanggal", "DESC"]]
         });
+
         res.status(200).json(data);
     } catch (error) {
         console.error("ERROR di getKeuangan:", error.message);
         res.status(500).json({ msg: "Gagal mengambil data", error: error.message });
     }
 };
+// =======================================================================
 
 // ====== READ BY ID ======
 export const getKeuanganById = async (req, res) => {
+    // ... (Fungsi ini sudah benar, tidak perlu diubah)
     try {
         const { id } = req.params;
         console.log("getKeuanganById: Mencari data dengan id =", id);
@@ -66,6 +87,7 @@ export const getKeuanganById = async (req, res) => {
 
 // ====== UPDATE ======
 export const updateKeuangan = async (req, res) => {
+    // ... (Fungsi ini sudah benar, tidak perlu diubah)
     try {
         const { id } = req.params;
         const updateData = req.body;
@@ -89,6 +111,7 @@ export const updateKeuangan = async (req, res) => {
 
 // ====== DELETE ======
 export const deleteKeuangan = async (req, res) => {
+    // ... (Fungsi ini sudah benar, tidak perlu diubah)
     try {
         const { id } = req.params;
         const data = await Keuangan.findByPk(id);
