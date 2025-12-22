@@ -12,6 +12,12 @@ const Kegiatan = sequelize.define(
     id_user: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: "users",
+        key: "id_user",
+      },
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     },
     nama_kegiatan: {
       type: DataTypes.STRING(100),
@@ -46,6 +52,11 @@ const Kegiatan = sequelize.define(
   {
     tableName: "kegiatan",
     timestamps: false,
+    indexes: [
+      {
+        fields: ["id_user"],
+      },
+    ],
   }
 );
 
