@@ -11,13 +11,13 @@ import upload from "../middleware/upload.js";
 
 const router = express.Router();
 
-// GET semua kegiatan
+// GET kegiatan berdasarkan user
 router.get("/", getKegiatan);
 
 // GET by id
 router.get("/:id", getKegiatanById);
 
-// POST create kegiatan
+// CREATE
 router.post("/", upload.single("foto_kegiatan"), createKegiatan);
 
 // UPDATE

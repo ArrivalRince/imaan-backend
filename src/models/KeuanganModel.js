@@ -1,7 +1,6 @@
 import { DataTypes } from "sequelize";
-import db from "../config/db.js"; // Pastikan path ke config DB benar
-import Users from "./UserModel.js"; // WAJIB: Import model Users untuk relasi
-
+import db from "../config/db.js"; 
+import Users from "./UserModel.js"; 
 const Keuangan = db.define(
   "Keuangan",
   {
@@ -13,7 +12,7 @@ const Keuangan = db.define(
     id_user: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      // Secara eksplisit mendefinisikan foreign key constraint
+      
       references: {
         model: Users,
         key: 'id_user'
@@ -23,7 +22,7 @@ const Keuangan = db.define(
     tipe_transaksi: { type: DataTypes.ENUM("pemasukan", "pengeluaran"), allowNull: false },
     tanggal: { type: DataTypes.DATEONLY, allowNull: false },
     jumlah: {
-      type: DataTypes.INTEGER, // Tipe data sudah benar
+      type: DataTypes.INTEGER, 
       allowNull: false,
     },
     bukti_transaksi: { type: DataTypes.STRING, allowNull: true },
@@ -34,11 +33,10 @@ const Keuangan = db.define(
   }
 );
 
-// ================== PERBAIKAN PENTING DI SINI ==================
-// Definisikan hubungan antar tabel secara eksplisit
+
 Users.hasMany(Keuangan, { foreignKey: 'id_user' });
 Keuangan.belongsTo(Users, { foreignKey: 'id_user' });
-// =============================================================
+
 
 export default Keuangan;
 

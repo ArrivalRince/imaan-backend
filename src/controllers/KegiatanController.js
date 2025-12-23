@@ -1,8 +1,6 @@
 import Kegiatan from "../models/KegiatanModel.js";
 
-// =====================
-// GET KEGIATAN BY USER
-// =====================
+// get all kegiatan for a user
 export const getKegiatan = async (req, res) => {
   try {
     const { id_user } = req.query;
@@ -22,9 +20,7 @@ export const getKegiatan = async (req, res) => {
   }
 };
 
-// =====================
-// GET BY ID
-// =====================
+// get kegiatan by id
 export const getKegiatanById = async (req, res) => {
   try {
     const data = await Kegiatan.findByPk(req.params.id);
@@ -35,9 +31,7 @@ export const getKegiatanById = async (req, res) => {
   }
 };
 
-// =====================
-// CREATE
-// =====================
+//kegiatan create
 export const createKegiatan = async (req, res) => {
   try {
     const {
@@ -71,9 +65,7 @@ export const createKegiatan = async (req, res) => {
   }
 };
 
-// =====================
-// UPDATE
-// =====================
+//kegiatan update
 export const updateKegiatan = async (req, res) => {
   try {
     const { id } = req.params;
@@ -93,9 +85,7 @@ export const updateKegiatan = async (req, res) => {
   }
 };
 
-// =====================
-// DELETE
-// =====================
+//kegiatan delete
 export const deleteKegiatan = async (req, res) => {
   try {
     await Kegiatan.destroy({

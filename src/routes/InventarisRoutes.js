@@ -10,9 +10,7 @@ import {
 
 const router = express.Router(); // ✅ WAJIB
 
-// =====================
-// MULTER CONFIG
-// =====================
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
@@ -24,9 +22,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// =====================
-// ROUTES (FILTER PER USER)
-// =====================
+
 
 // contoh: GET /api/inventaris?id_user=14
 router.get("/", getInventaris);
